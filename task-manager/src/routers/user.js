@@ -7,6 +7,7 @@ const sharp = require('sharp')
 const User = require('../models/user')
 const Task = require('../models/task')
 const auth = require("../middleware/auth")
+const { sendWelcomeEmail, sendDeleteAccountEmail } = require('../emails/account')
 
 const router = express.Router()
 
@@ -16,17 +17,18 @@ router.get('/user/me', auth, async (req, res) => {
 })
 
 //USER..............................................................
-router.post('/users', async (req, res, next) => {
+router.post('/users', async (req, res) => {
     // Updated code with async/await
     const user = new User(req.body)
     try {     
         await user.save()
+        sendWelcomeEmail(user.email, user.name)
         const jwtToken = await user.generateAuthToken()
         res.status(201).send({ user, jwtToken })
     }
-    catch (e) {
+    catch (error) {
         // console.log(e)
-        res.status(400).send(e)
+        res.status(400).send({ error: error.message });
         // return next(e)
     }   
 })
@@ -116,6 +118,7 @@ router.delete('/users/me', auth, async (req, res) => {
         const task = await Task.deleteMany({ owner: req.user._id})
         // NOT WORKING -> ERROR: TypeError: req.user._id.remove is not a function
         // await req.user.remove()
+        sendDeleteAccountEmail(req.user.email, req.user.name)
         res.send(req.user)
     }
     catch (e) {

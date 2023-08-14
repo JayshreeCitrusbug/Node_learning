@@ -72,7 +72,7 @@ userSchema.methods.toJSON = function () {
 //.methods is used for model instance only
 userSchema.methods.generateAuthToken = async function () {
     const user = this
-    const token = jwt.sign({ _id: user._id.toString() }, "signature")
+    const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET)
 
     user.tokens = user.tokens.concat({token})
     await user.save()
@@ -101,9 +101,9 @@ userSchema.statics.findByCredentials = async (email, password) => {
 userSchema.pre('save', async function(next) {
     const user = this
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+    
     if (!emailRegex.test(user.email)) {
-        next(new Error('Please enter a valid email'));
+        throw new Error('Please enter a valid email');
     }
 
     if(user.isModified('password')){
