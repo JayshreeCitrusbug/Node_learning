@@ -1,7 +1,7 @@
 const express = require('express')
 const Task = require('../models/task')
 const auth = require("../middleware/auth")
-const router = express.Router()
+const router = new express.Router()
 
 // TASK................................................................
 router.post('/tasks', auth, async (req, res) => {   
@@ -23,7 +23,7 @@ router.post('/tasks', auth, async (req, res) => {
 //:::::::::::::::::::::::::::::::::::::::::::::::
 // GET /tasks/?completed=true
 // GET /tasks/?limit=10&skip=0
-// GET /tasks/?sortBy=createdAt_asc  or ?sortBy=createdAt_desc
+// GET /tasks/?sortBy=createdAt:asc  or ?sortBy=createdAt:desc
 router.get('/tasks', auth, async (req, res) => {
     try{
         // METHOD-1:

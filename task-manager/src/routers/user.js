@@ -9,7 +9,7 @@ const Task = require('../models/task')
 const auth = require("../middleware/auth")
 const { sendWelcomeEmail, sendDeleteAccountEmail } = require('../emails/account')
 
-const router = express.Router()
+const router = new express.Router()
 
 
 router.get('/user/me', auth, async (req, res) => {
@@ -27,7 +27,7 @@ router.post('/users', async (req, res) => {
         res.status(201).send({ user, jwtToken })
     }
     catch (error) {
-        // console.log(e)
+        console.log(error.message)
         res.status(400).send({ error: error.message });
         // return next(e)
     }   
@@ -118,6 +118,8 @@ router.delete('/users/me', auth, async (req, res) => {
         const task = await Task.deleteMany({ owner: req.user._id})
         // NOT WORKING -> ERROR: TypeError: req.user._id.remove is not a function
         // await req.user.remove()
+        
+        
         sendDeleteAccountEmail(req.user.email, req.user.name)
         res.send(req.user)
     }
