@@ -1,7 +1,7 @@
 const request = require('supertest')
 const app = require('../src/app')
 const User = require('../src/models/user')
-const {successUserId, successUser, failureUser, setupTestData} = require('./__mocks__/fixtures/db')
+const {successUserId, successUser, successUser2Id, successUser2, failureUser, setupTestData} = require('./__mocks__/fixtures/db')
 
 
 beforeEach(setupTestData)
@@ -46,18 +46,6 @@ test('Success get user profile', async() => {
         .expect(200)
 })
 
-test('Success delete user account', async() => {
-    const response = await request(app)
-        .delete('/users/me')
-        .set('Authorization', `Bearer ${ successUser.tokens[0].token }`)
-        .send()
-        .expect(200)
-    
-        const user = await User.findById(successUserId)
-        expect(user).toBeNull()
-
-})
-
 test('Success upload avatar image', async () => {
     await request(app)
         .post('/users/me/avatar')
@@ -84,6 +72,27 @@ test('Success update user', async() => {
     expect(user.email).toEqual('jayshree.citrusbug@yopmail.com')
 })
 
+test('Success delete user account', async() => {
+    const response = await request(app)
+        .delete('/users/me')
+        .set('Authorization', `Bearer ${ successUser.tokens[0].token }`)
+        .send()
+        .expect(200)
+    
+        const user = await User.findById(successUserId)
+        expect(user).toBeNull()
+
+})
+
+test('Success user logout', async() => {
+    const response = await request(app)
+        .post('/user/logout')
+        .set('Authorization', `Bearer ${ successUser.tokens[0].token }`)
+        .expect(200)
+
+    const user = await User.findById(successUserId)
+    expect(user.tokens.length).toEqual(0)
+})
 
 // Failure Test Case
 test('Failure user login', async () => {
@@ -102,6 +111,35 @@ test('Failure get user profile', async() => {
         expect(response.body).toEqual({"error": "Please authenticate."});
 })
 
+test('Failure update user with invalid key update', async() => {
+    await request(app)
+    .patch('/users/me')
+    .set('Authorization', `Bearer ${successUser.tokens[0].token}`)
+    .send({
+        location: "India"
+    })
+    .expect(400)
+})
+
+test('Failure update unauthenticated user', async() => {
+    await request(app)
+    .patch('/users/me')
+    .send({
+        name: "Jayshree"
+    })
+    .expect(401)
+})
+
+test('Failure update user that does not exists', async() => {
+    await request(app)
+    .patch('/users/me')
+    .set('Authorization', `Bearer ${failureUser.tokens[0].token}`)
+    .send({
+        name: "Jayshree"
+    })
+    .expect(404)
+})
+
 test('Failure delete user account without authentication', async() => {
     await request(app)
         .delete('/users/me')
@@ -115,14 +153,4 @@ test('Failure delete user account with user not found', async() => {
         .set('Authorization', `Bearer ${ failureUser.tokens[0].token }`)
         .send()
         .expect(404)
-})
-
-test('Failure update user with invalid key update', async() => {
-    await request(app)
-    .patch('/users/me')
-    .set('Authorization', `Bearer ${successUser.tokens[0].token}`)
-    .send({
-        location: "India"
-    })
-    .expect(400)
 })

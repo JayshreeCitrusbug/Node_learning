@@ -87,5 +87,9 @@ module.exports = {
     successUser2Id,
     successUser2,
     failureUser,
+    task1,
+    task2,
+    task3,
+    task4,
     setupTestData
 }
