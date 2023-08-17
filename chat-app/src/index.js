@@ -1,7 +1,13 @@
-const path = require('path')
+const path = require('path') // path is default package and provided by express it self
 const http = require('http')
 const express = require('express')
 const socketio = require('socket.io')
+const Filter = require('bad-words')
+const { createRequire } = require('module')
+
+// utils
+const { generateMessage, generateLocation } = require('./utils/messages')
+
 const port = process.env.PORT || 3000
 
 
@@ -19,14 +25,32 @@ app.use(express.static(publicDirectoryPath))
 io.on('connection', (socket) => {
     console.log('New web socket connection')
 
-    socket.emit('message', 'Welcome to the chat-app!' )
-    socket.broadcast.emit('message', 'A new user join')
-    socket.on('dataSent', (message) => {
-        io.emit('message', message)
+    socket.emit('message', generateMessage('Welcome to the chat-app!') )
+    socket.broadcast.emit('message', generateMessage('A new user join'))
+
+    // Message event...
+    socket.on('sendMessage', (message, callback) => {
+        const filter = new Filter()
+
+        if(filter.isProfane(message)){
+            // io.emit('message', 'Please type user friendly message, Profanity is not allowed ')
+            return callback("Profanity is not allowed")
+        }
+
+        io.emit('message', generateMessage(message))
+        callback()
     })
 
+
+    socket.on('sendLocation', (coords, callback) => {
+        // https://google.com/maps?q=lat,long
+        io.emit('location', generateLocation(`https://google.com/maps?q=${coords.latitude},${coords.longitude}`))
+        callback()
+    })
+
+
     socket.on('disconnect', () => {
-        io.emit('message',"A user left!!")
+        io.emit('message', generateMessage('A user left!!'))
     })
 })
 
